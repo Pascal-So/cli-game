@@ -6,8 +6,6 @@
 #define ll long long
 #define point std::pair<int, int>
 
-
-
 std::vector<std::vector<bool> > generate_map(int width, int height, int rooms){
     
 }
