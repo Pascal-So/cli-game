@@ -2,6 +2,7 @@
 #include "mapGenerator.hpp"
 #include "unionFind.hpp"
 #include <vector>
+#include <utility>
 
 
 TEST(UnionFindTest, emptyUnion){
@@ -102,10 +103,75 @@ TEST(MapGeneratorTest, getMST){
     
     auto mst = get_mst(points);
 
-    EXPECT_EQ(mst.size(), points.size()-1);
+    ASSERT_EQ(mst.size(), points.size()-1);
 
-    EXPECT_EQ(mst[0], std::make_pair(0, 1));
-    EXPECT_EQ(mst[1], std::make_pair(1, 2));
+    EXPECT_EQ(mst[0], std::make_pair(0, 1)); // macro doesn't accept curly
+    EXPECT_EQ(mst[1], std::make_pair(1, 2)); // bracket pair notation
     EXPECT_EQ(mst[2], std::make_pair(1, 3));
     EXPECT_EQ(mst[3], std::make_pair(2, 4));
+}
+
+TEST(MapGeneratorTest, getAllEdges){
+    std::vector<point> points;
+
+    points.push_back({0, 0});
+    points.push_back({0, 1});
+    points.push_back({1, 0});
+    points.push_back({1, 1});
+
+    auto edges = get_all_edges(points);
+
+    ASSERT_EQ(edges.size(), 6);
+
+    for(auto e:edges){
+	ll dist = sqDist(points[e.second.first], points[e.second.second]);
+	EXPECT_EQ(e.first, dist);
+    }
+}
+
+
+TEST(MapGeneratorTest, vertexCoverApproximation){
+    std::vector<std::pair<int, int> > edges;
+
+    edges.push_back({0, 4});
+    edges.push_back({4, 1});
+    edges.push_back({1, 3});
+    edges.push_back({3, 2});
+    edges.push_back({2, 4});
+
+    int n = 5;
+    
+    auto cover = vertex_cover_approximation(edges, n);
+
+    ASSERT_LE(cover.size(), n);
+
+    for(auto e:edges){     // test per edge if it is covered
+	bool covered = false;
+	for(auto v:cover){
+	    if(v == e.first || v == e.second){
+		covered = true;
+		break;
+	    }
+	}
+	EXPECT_TRUE(covered);
+    }
+}
+
+TEST(MapGeneratorTest, relaxPointset){
+    std::vector<point> points;
+
+    points.push_back({0, 0});
+    points.push_back({0, 1});
+    points.push_back({0, 2});
+    points.push_back({2, 1});
+
+    ll minDist = 2;
+    
+    auto relaxed = relax_pointset(points, minDist);
+
+    auto distances = get_all_edges(relaxed);
+
+    for(auto d:distances){
+	ASSERT_GE(d.first, minDist);
+    }
 }
