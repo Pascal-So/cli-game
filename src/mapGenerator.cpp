@@ -7,8 +7,131 @@
 #define ll long long
 #define point std::pair<int, int>
 
-std::vector<std::vector<bool> > generate_map(int width, int height, int rooms){
+
+
+void print_map(std::vector<std::vector<bool> > map){
+    for(auto &row:map){
+	for(auto e:row){
+	    std::cout<< (e ? "#" : " ") << " ";
+	}
+	std::cout<<"\n";
+    }
+}
+
+// line_width has to be odd
+void draw_line(std::vector<std::vector<bool> > & map, point start, point end, int line_width){
+    int height = map.size();
+    int width = height > 0 ? map[0].size() : 0;
+
+    assert(start.first == end.first || start.second == end.second);
     
+    enum {horizontal, vertical} direction = start.first == end.first ? vertical : horizontal;
+
+    int startX, endX, startY, endY;
+
+    if(direction == horizontal){
+	startX = std::min(start.first, end.first);
+	endX = std::max(start.first, end.first);
+	startY = start.second - line_width/2;
+	endY = start.second + line_width/2;
+    }else{
+	startX = start.first - line_width/2;
+	endX = start.first + line_width/2;
+	startY = std::min(start.second, end.second);
+	endY = std::max(start.second, end.second);
+    }
+
+    for(int x = std::max(startX, 0); x <= std::min(endX, width-1); ++x){
+	for(int y = std::max(startY, 0); y <= std::min(endY, height-1); ++y){
+	    map[y][x] = true;
+	}
+    }
+}
+
+void draw_circle(std::vector<std::vector<bool> > & map, point origin, double radius){
+    int height = map.size();
+    int width = height > 0 ? map[0].size() : 0;
+    
+    int int_radius = radius;
+    for(int y = std::max(0, origin.second - int_radius); y <= std::min(origin.second + int_radius, height-1); ++y){
+	for(int x = std::max(0, origin.first - int_radius); x <= std::min(origin.first + int_radius, width-1); ++x){
+	    if(sqDist(origin, {x, y}) <= radius * radius){
+		map[y][x] = true;
+	    }
+	}
+    }
+}
+
+std::vector<std::vector<bool> > generate_map(int width, int height, int max_rooms){ // [bool walkable]
+    double roomGap = 0.5;
+    int min_dist = 6;
+    int corridor_width = 3;
+
+    auto points = generate_relaxed_pointset(width, height, max_rooms, min_dist);
+
+    int n = points.size();
+    
+    auto mst = get_mst(points);
+
+    std::vector<std::vector<int> > adj_mst (n);
+
+    for(auto e:mst){
+	adj_mst[e.first].push_back(e.second);
+	adj_mst[e.second].push_back(e.first);
+    }
+
+    std::vector<std::vector<bool> > map (height, std::vector<bool> (width, false)); // [y][x]
+
+    // draw rooms
+    
+    for(int i = 0; i < n; ++i){
+	auto p = points[i];
+	double max_radius = width;
+	for(auto j:adj_mst[i]){
+	    auto o = points[j];
+	    max_radius = std::min(max_radius, sqrt(sqDist(p, o)));
+	}
+	max_radius = std::max((max_radius - roomGap) / 2, 1.0);
+
+	draw_circle(map, p, max_radius);
+    }
+
+    // draw corridors
+
+    for(int i = 0; i < n; ++i){
+	auto p = points[i];
+	for(int j:adj_mst[i]){
+	    auto o = points[j];
+
+	    bool horizontal_first = rand()%2; // go across and then vertical?
+
+	    point middle_point =
+		horizontal_first
+		? std::make_pair(o.first, p.second)
+		: std::make_pair(p.first, o.second);
+
+	    draw_line(map, p, middle_point, corridor_width);
+	    draw_line(map, o, middle_point, corridor_width);
+	}
+    }
+    
+    return map;
+}
+
+std::vector<point> generate_relaxed_pointset(int width, int height, int max_points, int min_dist){
+    std::vector<point> points;
+
+    for(int i = 0; i < max_points; ++i){
+	points.push_back(generate_point(width, height));
+    }
+
+    points = relax_pointset(points, min_dist);
+
+    if(points.empty()){
+	points.push_back(generate_point(width, height));
+    }
+    
+    return points;
 }
 
 std::vector<std::pair<ll, std::pair<int, int> > > get_all_edges(std::vector<point> nodes){ // -> {dist, {a, b}}
@@ -41,13 +164,17 @@ std::vector<int> vertex_cover_approximation(std::vector<std::pair<int, int> > ed
     std::vector<int> vertex_cover;
     
     for(int i = 0; i < m; ++i){
-	if(! covered[i]){	    
-	    for(auto vertex:pair_to_vector(edges[i])){
-		vertex_cover.push_back(vertex);
-		for(auto e:edges_by_vertex[vertex]){
-		    covered[e] = true;
-		}
+	if(! covered[i]){
+	    int v1 = edges[i].first;
+	    int v2 = edges[i].second;
+
+	    int vertex = edges_by_vertex[v1].size() > edges_by_vertex[v2].size() ? v1 : v2;
+	    
+	    vertex_cover.push_back(vertex);
+	    for(auto e:edges_by_vertex[vertex]){
+		covered[e] = true;
 	    }
+	    
 	}
     }
 
@@ -81,7 +208,9 @@ std::vector<std::pair<int, int> > get_mst(std::vector<point> nodes){
     return edgesInMst;
 }
 
-std::vector<point> relax_pointset(std::vector<point> pointset, ll minDist){
+std::vector<point> relax_pointset(std::vector<point> pointset, ll min_dist){
+    min_dist *= min_dist;
+    
     int n = pointset.size();
     
     auto edges = get_all_edges(pointset);
@@ -89,7 +218,7 @@ std::vector<point> relax_pointset(std::vector<point> pointset, ll minDist){
     std::vector<std::pair<int, int> > shortEdges;
     
     for(auto e:edges){
-	if(e.first < minDist){
+	if(e.first < min_dist){
 	    shortEdges.push_back(e.second);
 	}
     }
@@ -126,3 +255,9 @@ ll sqDist(point a, point b){
 point generate_point(int width, int height){
     return {rand() % width, rand() % height};
 }
+
+/*int main(){
+    srand(time(0));
+    print_map(generate_map(135, 71, 24));
+}
+*/

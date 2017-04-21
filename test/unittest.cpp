@@ -175,3 +175,60 @@ TEST(MapGeneratorTest, relaxPointset){
 	ASSERT_GE(d.first, minDist);
     }
 }
+
+TEST(MapGeneratorTest, generateRelaxedPointset){
+    int width = 10;
+    int height = 20;
+    int n = 30;
+    int dist = 3;
+    auto points = generate_relaxed_pointset(width, height, n, dist);
+
+    ASSERT_LE(points.size(), n);
+
+    ASSERT_GT(points.size(), 0);
+    
+    for(auto p:points){
+	EXPECT_GE(p.first, 0);
+	EXPECT_GE(p.second, 0);
+	EXPECT_LT(p.first, width);
+	EXPECT_LT(p.second, height);
+    }
+
+    auto distances = get_all_edges(points);
+
+    for(auto d:distances){
+	ASSERT_GE(d.first, dist);
+    }
+}
+
+TEST(MapGeneratorTest, drawLine){
+    int width = 10;
+    int height = 5;
+
+    std::vector<std::vector<bool> > map (height, std::vector<bool> (width, false));
+
+    draw_line(map, {3, 3}, {8, 3}, 3);
+
+    for(int y = 2; y <= 4; ++y){
+	for(int x = 3; x <= 8; ++x ){
+	    EXPECT_TRUE(map[y][x]);
+	}
+    }
+
+    for(int y = 0; y < 2; ++y){
+	for(int x = 0; x < width; ++x){
+	    EXPECT_FALSE(map[y][x]);
+	}
+    }
+    for(int y = 0; y < height; ++y){
+	for(int x = 0; x < 3; ++x){
+	    EXPECT_FALSE(map[y][x]);
+	}
+    }
+    
+    for(int y = 0; y < height; ++y){
+	for(int x = 9; x < width; ++x){
+	    EXPECT_FALSE(map[y][x]);
+	}
+    }
+}
