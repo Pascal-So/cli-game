@@ -20,10 +20,6 @@ std::vector<point> generate_relaxed_pointset(int width, int height, int max_poin
 
 std::vector<std::pair<int, int> > get_mst(std::vector<point> nodes);
 
-ll sqDist(point a, point b);
-
-point generate_point(int width, int height);
-
 std::vector<point> relax_pointset(std::vector<point> pointset, ll minDist);
 
 #endif

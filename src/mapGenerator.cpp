@@ -1,8 +1,8 @@
 #include<bits/stdc++.h>
-#include <curses.h>
 #include "unionFind.hpp"
 #include "mapGenerator.hpp"
 #include "utils.hpp"
+#include "geometry.hpp"
 
 #define ll long long
 #define point std::pair<int, int>
@@ -51,13 +51,14 @@ void draw_line(std::vector<std::vector<bool> > & map, point start, point end, in
 void draw_circle(std::vector<std::vector<bool> > & map, point origin, double radius){
     int height = map.size();
     int width = height > 0 ? map[0].size() : 0;
-    
-    int int_radius = radius;
-    for(int y = std::max(0, origin.second - int_radius); y <= std::min(origin.second + int_radius, height-1); ++y){
-	for(int x = std::max(0, origin.first - int_radius); x <= std::min(origin.first + int_radius, width-1); ++x){
-	    if(sqDist(origin, {x, y}) <= radius * radius){
-		map[y][x] = true;
-	    }
+
+    auto points = point_circle(radius);
+
+    for(auto p:points){
+	int x = p.first + origin.first;
+	int y = p.second + origin.second;
+	if(x >= 0 && y >= 0 && x < width && y < height){
+	    map[y][x] = true;
 	}
     }
 }
@@ -89,7 +90,7 @@ std::vector<std::vector<bool> > generate_map(int width, int height, int max_room
 	double max_radius = width;
 	for(auto j:adj_mst[i]){
 	    auto o = points[j];
-	    max_radius = std::min(max_radius, sqrt(sqDist(p, o)));
+	    max_radius = std::min(max_radius, sqrt(sq_dist(p, o)));
 	}
 	max_radius = std::max((max_radius - roomGap) / 2, 1.0);
 
@@ -140,7 +141,7 @@ std::vector<std::pair<ll, std::pair<int, int> > > get_all_edges(std::vector<poin
     std::vector<std::pair<ll, std::pair<int, int> > > distances;
     for(int i = 0; i < n; ++i){
 	for(int j = 0; j < i; ++j){
-	    distances.push_back({sqDist(nodes[i], nodes[j]), {j, i}});
+	    distances.push_back({sq_dist(nodes[i], nodes[j]), {j, i}});
 	}
     }
 
@@ -245,16 +246,6 @@ std::vector<point> relax_pointset(std::vector<point> pointset, ll min_dist){
     return relaxed;
 }
 
-ll sqDist(point a, point b){
-    ll dx = b.first - a.first;
-    ll dy = b.second - a.second;
-
-    return dx*dx + dy*dy;
-}
-
-point generate_point(int width, int height){
-    return {rand() % width, rand() % height};
-}
 
 /*int main(){
     srand(time(0));
