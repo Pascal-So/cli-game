@@ -1,6 +1,15 @@
 #include<bits/stdc++.h>
 #include "geometry.hpp"
 
+std::size_t pointhash::operator()(const std::pair<int, int> &x) const {
+    return (std::hash<int>()(x.first)<<1) ^ std::hash<int>()(x.second);
+}
+
+
+ll manhattan_dist(point a, point b){
+    return abs(a.first - b.first) + abs(a.second + b.second);
+}
+
 std::vector<point> point_circle(int radius){
     std::vector<point> points;
     

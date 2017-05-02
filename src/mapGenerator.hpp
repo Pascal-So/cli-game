@@ -6,6 +6,8 @@
 #ifndef MAPGENERATOR_HPP
 #define MAPGENERATOR_HPP
 
+void print_map(std::vector<std::vector<bool> > map);
+
 std::vector<std::pair<ll, std::pair<int, int> > > get_all_edges(std::vector<point> nodes); // -> {dist, {a, b}}
 
 std::vector<int> vertex_cover_approximation(std::vector<std::pair<int, int> > edges, int n);

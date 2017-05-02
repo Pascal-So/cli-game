@@ -12,7 +12,7 @@
 void print_map(std::vector<std::vector<bool> > map){
     for(auto &row:map){
 	for(auto e:row){
-	    std::cout<< (e ? "#" : " ") << " ";
+	    std::cout<< (e ? " " : ".") << " ";
 	}
 	std::cout<<"\n";
     }

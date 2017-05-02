@@ -1,4 +1,4 @@
-CXXFLAGS += -g -Wall -Wextra -D_GLIBCXX_DEBUG -pthread -std=c++0x
+CXXFLAGS += -g -Wall -Wextra -D_GLIBCXX_DEBUG -pthread -std=c++0x -lncurses -lcurses
 
 all: ncTest
 
